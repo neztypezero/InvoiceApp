@@ -71,7 +71,7 @@ html, body {
 	padding:2em;
 }
 
-.invoice-container > .from-section > .from-invoice-info > .invoice-copier {
+.invoice-container > .from-section > .from-invoice-info > .bill-to-company-name-list {
 	margin-bottom:1em;
 }
 
@@ -104,13 +104,20 @@ html, body {
 
 .invoice-container > .description-section > .description-row {
 	display:flex;
+	flex-wrap:wrap;
 	align-items:flex-start;
 	gap:0.5em;
 }
 
 .invoice-container > .description-section > .description-row > textarea.description {
+	flex:1 1 100%;
+	width:1px;
+}
+
+.invoice-container > .description-section > .description-row > input.heading {
 	flex:1 1 60%;
 	width:1px;
+	font-weight:bold;
 }
 
 .invoice-container > .description-section > .description-row > input.rate,

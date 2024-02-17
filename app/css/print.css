@@ -1,0 +1,140 @@
+html, body {
+	margin:0;
+	padding:0;
+	font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size:15px;
+  color:#555555ff;
+}
+
+.invoice-container {
+	margin:0 auto;
+	border-top:0.35em solid black;
+}
+
+.invoice-container .spacer {
+	margin:1em 2em;
+	height:0.10em;
+	background-color:darkgray;
+}
+
+.invoice-container .spacer.dark {
+	background-color:black;
+}
+
+.invoice-container > .section {
+	padding:0.25em 2em;
+}
+
+.invoice-container > .section.from {
+	display:flex;
+}
+
+.invoice-container > .section > .from-personal-info,
+.invoice-container > .section > .from-invoice-info {
+	flex:1 1 50%;
+}
+
+.invoice-container > .section > .from-invoice-info {
+	text-align:right;
+	margin-top:1.5em;
+}
+
+.name {
+	margin:1em 0 0.5em;
+	font-size:1.5em;
+	font-weight:700;
+}
+
+.bill + .name {
+	margin-top:0.5em;
+}
+
+.heading {
+	font-weight:700;
+}
+
+.row {
+	margin-top:0.25em;
+}
+
+.label {
+	font-weight:700;
+}
+
+.from-account-info {
+	margin-top:1em;
+}
+
+.from-invoice-date {
+	margin:1em 0;
+}
+
+.description.section > .description-row {
+	display:flex;
+	flex-wrap:wrap;
+}
+
+.description.section > .description-row > .heading {
+	flex:1 1 60%;
+}
+
+.description.section > .description-row > .rate,
+.description.section > .description-row > .amount {
+	flex:0 0 13.5%;
+	text-align:right;
+}
+
+.description.section > .description-row > .qty {
+	flex:1 1 6%;
+	text-align:right;
+}
+
+.description.section > .description-row > .description {
+	flex:0 0 60%;
+	margin-top:1em;
+}
+
+.description.section > .spacer {
+	margin-left:0;
+	margin-right:0;
+}
+
+.total.section {
+	width:40%;
+	margin-left:auto;
+	padding-left:0;
+}
+
+.total.section > .row {
+	display:flex;
+}
+
+.total.section > .row > .heading {
+	margin-right:auto;
+}
+
+.total.section > .spacer {
+	margin-left:0;
+	margin-right:0;
+	background-color:lightgray;
+}
+
+.total.section > .row {
+	margin:0;
+}
+
+.total.section .balance-total {
+	font-size:1.5em;
+	font-weight:700;
+	margin:0;
+	position:relative;
+}
+
+.total.section .balance-total > span {
+	position:absolute;
+	top:-0.15em;
+	right:0;
+	white-space:nowrap;
+}

@@ -15,6 +15,11 @@ async function postData(url = "", data = {}) {
     referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
     body: JSON.stringify(data), // body data type must match "Content-Type" header
   });
+  for(let header of response.headers.entries()) {
+  	if (header[0] == 'content-type' && header[1].indexOf('text/html;') != -1) {
+  		return response.text();
+  	}
+  }
   return response.json(); // parses JSON response into native JavaScript objects
 }
 
@@ -37,7 +42,7 @@ function createElement(type, className, id, innerHTML, attributes) {
 	return element;
 }
 
-function loadLatestInvoice(data) {
+function loadInvoice(data) {
 	if (data.fromSection) {
 		let fromSection = document.querySelector('.invoice-container > .from-section');
 		let fromPersonalInfo = fromSection.querySelector('.from-personal-info');
@@ -100,10 +105,67 @@ function appendInvoiceCopier(parentElement, input) {
 	let button = createElement('button', 'copy-button', null, 'Copy Latest Invoice', {type:'button'});
 	button.addEventListener('click', (e) => {
 		postData("/load-latest-invoice", { billToCompanyName: input.value }).then((data) => {
-			loadLatestInvoice(data); // JSON data parsed by `data.json()` call
+			loadInvoice(data); // JSON data parsed by `data.json()` call
 		});
 	});
 	inputRow.appendChild(button);
+}
+
+function loadBillToCompanyNameSelect(selectElement, data) {
+	for (let companyName of data) {
+		let option = createElement('option', 'bill-to-company-name-option', null, companyName);
+		selectElement.appendChild(option);
+	}
+}
+
+function appendBillToCompanyNameSelect(parentElement) {
+	let inputRow = createElement('div', 'input-row');
+	parentElement.appendChild(inputRow);
+
+	let selectElement = createElement('select', 'load-bill-to-company-name-select');
+	inputRow.appendChild(selectElement);
+
+	postData("/load-bill-to-company-name-list", {}).then((data) => {
+		loadBillToCompanyNameSelect(selectElement, data); // JSON data parsed by `data.json()` call
+		appendInvoiceListSelect(parentElement);
+	});
+}
+
+function loadInvoiceListSelect(selectElement, data) {
+	if (data.length == 0) {
+			let option = createElement('option', 'invoice-option', null, "No Invoices", {selected:"true", disabled:"disabled"});
+			selectElement.appendChild(option);
+	} else {
+		let option = createElement('option', 'invoice-option', null, "Choose Invoice...", {selected:"true", disabled:"disabled"});
+		selectElement.appendChild(option);
+		for (let invoice of data) {
+			let option = createElement('option', 'invoice-option', null, invoice);
+			selectElement.appendChild(option);
+		}
+	}
+}
+
+function appendInvoiceListSelect(parentElement) {
+	let inputRow = parentElement.querySelector('.input-row');
+	let selectElement = inputRow.querySelector('select.load-bill-to-company-name-select');
+
+	let invoiceSelectElement = inputRow.querySelector('select.invoice-select');
+	if (invoiceSelectElement) {
+		invoiceSelectElement.innerHTML = '';
+	} else {
+		invoiceSelectElement = createElement('select', 'invoice-select');
+		inputRow.appendChild(invoiceSelectElement);
+
+		invoiceSelectElement.addEventListener('change', function(e) {
+			postData("/load-invoice", { billToCompanyName: selectElement.value, invoice: invoiceSelectElement.value }).then((data) => {
+				loadInvoice(data); // JSON data parsed by `data.json()` call
+			});
+		});
+	}
+	
+	postData("/load-invoice-list", { billToCompanyName: selectElement.value }).then((data) => {
+		loadInvoiceListSelect(invoiceSelectElement, data); // JSON data parsed by `data.json()` call
+	});
 }
 
 function appendInput(parentElement, type, addable, attributes) {
@@ -143,18 +205,35 @@ function appendInfoInput(parentElement, accountLine = {label:'', value:''}) {
 	parentElement.appendChild(inputRow);
 }
 
-function appendDecription(parentElement, descriptionRow = {description:'', rate:'', qty:'', amount:''}) {
+function appendDecription(parentElement, descriptionRow = {heading:'', description:'', rate:'', qty:'', amount:''}) {
 	let inputRow = createElement('div', 'description-row');
-	inputRow.appendChild(createElement('textarea', 'description', null, descriptionRow.description, {rows:4}));
-	inputRow.appendChild(createElement('input', 'text-input rate', null, null, {type:'text', value:descriptionRow.rate}));
-	inputRow.appendChild(createElement('input', 'text-input qty', null, null, {type:'text', value:descriptionRow.qty}));
-	inputRow.appendChild(createElement('input', 'text-input amount', null, null, {type:'text', value:descriptionRow.amount}));
+	inputRow.appendChild(createElement('input', 'text-input heading', null, null, {type:'text', value:descriptionRow.heading}));
+	let rateInput = createElement('input', 'text-input rate', null, null, {type:'text', value:descriptionRow.rate});
+	let qtyInput = createElement('input', 'text-input qty', null, null, {type:'text', value:descriptionRow.qty});
+	let amountInput = createElement('input', 'text-input amount', null, null, {type:'text', value:descriptionRow.amount, disabled:"disabled"});
+	let onChangeMultiply = function() {
+		let rate = parseFloat(rateInput.value);
+		let qty = parseFloat(qtyInput.value);
+		if (!isNaN(rate) && !isNaN(qty)) {
+			amountInput.value = (rate*qty).toFixed(2);
+		} else {
+			amountInput.value = '';
+		}
+	}
+	rateInput.addEventListener('keyup', onChangeMultiply);
+	qtyInput.addEventListener('keyup', onChangeMultiply);
+
+	inputRow.appendChild(rateInput);
+	inputRow.appendChild(qtyInput);
+	inputRow.appendChild(amountInput);
 
 	let button = createElement('button', 'add-button', null, '+', {type:'button'});
 	button.addEventListener('click', (e) => {
 		appendDecription(parentElement);
 	});
 	inputRow.appendChild(button);
+
+	inputRow.appendChild(createElement('textarea', 'description', null, descriptionRow.description, {rows:4}));
 
 	parentElement.appendChild(inputRow);
 }
@@ -219,16 +298,18 @@ function getInvoiceJSON() {
 
 	let descriptionRowList = document.querySelectorAll('.invoice-container > .description-section > .description-row');
 	for (let descriptionRow of descriptionRowList) {
-		let descriptionTextarea = descriptionRow.querySelector('textarea.description');
+		let headingInput = descriptionRow.querySelector('input.text-input.heading');
 		let rateInput = descriptionRow.querySelector('input.text-input.rate');
 		let qtyInput = descriptionRow.querySelector('input.text-input.qty');
 		let amountInput = descriptionRow.querySelector('input.text-input.amount');
+		let descriptionTextarea = descriptionRow.querySelector('textarea.description');
 
 		invoiceJSON.descriptionSection.push(    {
-        "description": descriptionTextarea.value,
+        "heading": headingInput.value,
         "rate": rateInput.value,
         "qty": qtyInput.value,
-        "amount": amountInput.value
+        "amount": amountInput.value,
+        "description": descriptionTextarea.value,
     });
 	}
 	return invoiceJSON;
@@ -248,6 +329,12 @@ function appendSaveAndPrint(parentElement) {
 
 	let printPutton = createElement('button', 'print-button', null, 'Print', {type:'button'});
 	printPutton.addEventListener('click', (e) => {
+		let invoiceJSON = getInvoiceJSON();
+		postData("/print-invoice", invoiceJSON).then((data) => {
+			const printWindow = window.open('', '_blank');
+			printWindow.document.write(data);
+
+		});
 	});
 	inputRow.appendChild(printPutton);
 
@@ -285,6 +372,10 @@ function onLoad(event) {
 	let fromInvoiceInfo = createElement('div', 'from-invoice-info');
 	fromSection.appendChild(fromInvoiceInfo);
 
+	let billToCompanyNameList = createElement('div', 'bill-to-company-name-list');
+	fromInvoiceInfo.appendChild(billToCompanyNameList);
+	appendBillToCompanyNameSelect(billToCompanyNameList);
+
 	invoiceContainer.appendChild(createElement('div', 'spacer'));
 
 	let billToSection = createElement('div', 'bill-to-section');
@@ -296,10 +387,6 @@ function onLoad(event) {
 	let billToCompanyName = createElement('div', 'bill-to-company-name');
 	billToCompanyInfo.appendChild(billToCompanyName);
 	let billToCompanyNameInput = appendInput(billToCompanyName, 'text');
-
-	let invoiceCopier = createElement('div', 'invoice-copier');
-	fromInvoiceInfo.appendChild(invoiceCopier);
-	appendInvoiceCopier(invoiceCopier, billToCompanyNameInput);
 
 	let fromInvoiceNumber = createElement('div', 'from-invoice-number');
 	fromInvoiceInfo.appendChild(fromInvoiceNumber);
