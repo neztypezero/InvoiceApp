@@ -1,5 +1,23 @@
 document.addEventListener("DOMContentLoaded", onLoad);
 
+async function postData(url = "", data = {}) {
+  // Default options are marked with *
+  const response = await fetch(url, {
+    method: "POST", // *GET, POST, PUT, DELETE, etc.
+    mode: "cors", // no-cors, *cors, same-origin
+    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    credentials: "same-origin", // include, *same-origin, omit
+    headers: {
+      "Content-Type": "application/json",
+      // 'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    redirect: "follow", // manual, *follow, error
+    referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    body: JSON.stringify(data), // body data type must match "Content-Type" header
+  });
+  return response.json(); // parses JSON response into native JavaScript objects
+}
+
 function createElement(type, className, id, innerHTML, attributes) {
 	let element = document.createElement(type);
 	if (id) {
@@ -19,13 +37,71 @@ function createElement(type, className, id, innerHTML, attributes) {
 	return element;
 }
 
-function appendInvoiceCopier(parentElement) {
+function loadLatestInvoice(data) {
+	if (data.fromSection) {
+		let fromSection = document.querySelector('.invoice-container > .from-section');
+		let fromPersonalInfo = fromSection.querySelector('.from-personal-info');
+
+		let fromNameInput = fromPersonalInfo.querySelector('.from-name > .input-row > input.text-input');
+		fromNameInput.value = data.fromSection.fromPersonalInfo.fromName;
+
+		if (data.fromSection.fromPersonalInfo.fromAddressInfo.length > 0) {
+			let fromAddressInfo = fromPersonalInfo.querySelector('.from-address-info');
+			fromAddressInfo.innerHTML = '';
+			for (let addressLine of data.fromSection.fromPersonalInfo.fromAddressInfo) {
+				appendInput(fromAddressInfo, 'text', true, {value:addressLine});
+			}
+		}
+
+		if (data.fromSection.fromPersonalInfo.fromAccountInfo.length > 0) {
+			let fromAccountInfo = fromPersonalInfo.querySelector('.from-account-info');
+			fromAccountInfo.innerHTML = '';
+			for (let accountLine of data.fromSection.fromPersonalInfo.fromAccountInfo) {
+				appendInfoInput(fromAccountInfo, accountLine);
+			}
+		}
+
+		let fromInvoiceInfo = fromSection.querySelector('.from-invoice-info');
+
+		let fromInvoiceNumberInput = fromInvoiceInfo.querySelector('.from-invoice-number > .input-row > input.text-input');
+		fromInvoiceNumberInput.value = data.fromSection.fromInvoiceInfo.fromInvoiceNumber;
+
+		let fromInvoiceDateInput = fromInvoiceInfo.querySelector('.from-invoice-date > .input-row > input.date-input');
+		fromInvoiceDateInput.value = data.fromSection.fromInvoiceInfo.fromInvoiceDate;
+	}
+	if (data.billToSection) {
+		let billToSection = document.querySelector('.invoice-container > .bill-to-section');
+		let billToCompanyInfo = billToSection.querySelector('.bill-to-company-info');
+
+		let billToCompanyNameInput = billToCompanyInfo.querySelector('.bill-to-company-name > .input-row > input.text-input');
+		billToCompanyNameInput.value = data.billToSection.billToCompanyInfo.billToCompanyName;
+
+		if (data.billToSection.billToCompanyInfo.billToAddressInfo.length > 0) {
+			let billToAddressInfo = billToCompanyInfo.querySelector('.bill-to-address-info');
+			billToAddressInfo.innerHTML = '';
+			for (let addressLine of data.billToSection.billToCompanyInfo.billToAddressInfo) {
+				appendInput(billToAddressInfo, 'text', true, {value:addressLine});
+			}
+		}
+	}
+	if (data.descriptionSection) {
+		let descriptionSection = document.querySelector('.invoice-container > .description-section');
+		descriptionSection.innerHTML = '';
+		for (let description of data.descriptionSection) {
+			appendDecription(descriptionSection, description);
+		}
+	}
+}
+
+function appendInvoiceCopier(parentElement, input) {
 	let inputRow = createElement('div', 'input-row');
 	parentElement.appendChild(inputRow);
 
 	let button = createElement('button', 'copy-button', null, 'Copy Latest Invoice', {type:'button'});
 	button.addEventListener('click', (e) => {
-		//appendInput(parentElement, type, addable);
+		postData("/load-latest-invoice", { billToCompanyName: input.value }).then((data) => {
+			loadLatestInvoice(data); // JSON data parsed by `data.json()` call
+		});
 	});
 	inputRow.appendChild(button);
 }
@@ -36,7 +112,10 @@ function appendInput(parentElement, type, addable, attributes) {
 		attributes = {};
 	}
 	attributes.type = type;
-	inputRow.appendChild(createElement('input', type+'-input', null, null, attributes));
+
+	let input = createElement('input', type+'-input', null, null, attributes);
+	inputRow.appendChild(input);
+
 	if (addable) {
 		let button = createElement('button', 'add-button', null, '+', {type:'button'});
 		button.addEventListener('click', (e) => {
@@ -44,15 +123,16 @@ function appendInput(parentElement, type, addable, attributes) {
 		});
 		inputRow.appendChild(button);
 	}
-
 	parentElement.appendChild(inputRow);
+
+	return input;
 }
 
-function appendInfoInput(parentElement) {
+function appendInfoInput(parentElement, accountLine = {label:'', value:''}) {
 	let inputRow = createElement('div', 'input-row info');
-	inputRow.appendChild(createElement('input', 'text-input', null, null, {type:'text'}));
+	inputRow.appendChild(createElement('input', 'text-input label', null, null, {type:'text', value: accountLine.label}));
 	inputRow.appendChild(createElement('span', 'separator', null, ' : '));
-	inputRow.appendChild(createElement('input', 'text-input', null, null, {type:'text'}));
+	inputRow.appendChild(createElement('input', 'text-input value', null, null, {type:'text', value: accountLine.value}));
 
 	let button = createElement('button', 'add-button', null, '+', {type:'button'});
 	button.addEventListener('click', (e) => {
@@ -63,12 +143,12 @@ function appendInfoInput(parentElement) {
 	parentElement.appendChild(inputRow);
 }
 
-function appendDecription(parentElement) {
+function appendDecription(parentElement, descriptionRow = {description:'', rate:'', qty:'', amount:''}) {
 	let inputRow = createElement('div', 'description-row');
-	inputRow.appendChild(createElement('textarea', 'description', null, null));
-	inputRow.appendChild(createElement('input', 'text-input rate', null, null, {type:'text'}));
-	inputRow.appendChild(createElement('input', 'text-input qty', null, null, {type:'text'}));
-	inputRow.appendChild(createElement('input', 'text-input amount', null, null, {type:'text'}));
+	inputRow.appendChild(createElement('textarea', 'description', null, descriptionRow.description, {rows:4}));
+	inputRow.appendChild(createElement('input', 'text-input rate', null, null, {type:'text', value:descriptionRow.rate}));
+	inputRow.appendChild(createElement('input', 'text-input qty', null, null, {type:'text', value:descriptionRow.qty}));
+	inputRow.appendChild(createElement('input', 'text-input amount', null, null, {type:'text', value:descriptionRow.amount}));
 
 	let button = createElement('button', 'add-button', null, '+', {type:'button'});
 	button.addEventListener('click', (e) => {
@@ -79,11 +159,90 @@ function appendDecription(parentElement) {
 	parentElement.appendChild(inputRow);
 }
 
+function getInvoiceJSON() {
+	let invoiceJSON = {
+		fromSection: {
+			fromPersonalInfo: {
+				fromName: "",
+				fromAddressInfo: [],
+				fromAccountInfo: []
+			},
+			fromInvoiceInfo: {
+				fromInvoiceNumber: "",
+				fromInvoiceDate: ""
+			}
+		},
+		billToSection: {
+			billToCompanyInfo: {
+				billToCompanyName: "",
+				billToAddressInfo: []
+			}
+		},
+		descriptionSection: []
+	};
+
+	let fromSection = document.querySelector('.invoice-container > .from-section');
+	let fromPersonalInfo = fromSection.querySelector('.from-personal-info');
+
+	let fromNameInput = fromPersonalInfo.querySelector('.from-name > .input-row > input.text-input');
+	invoiceJSON.fromSection.fromPersonalInfo.fromName = fromNameInput.value;
+
+	let fromAddressInfoInputList = fromPersonalInfo.querySelectorAll('.from-address-info > .input-row > input.text-input');
+	for (let fromAddressInfo of fromAddressInfoInputList) {
+		invoiceJSON.fromSection.fromPersonalInfo.fromAddressInfo.push(fromAddressInfo.value);
+	}
+
+	let fromAccountInfoRowList = fromPersonalInfo.querySelectorAll('.from-account-info > .input-row');
+	for (let fromAccountInfoRow of fromAccountInfoRowList) {
+		let labelInput = fromAccountInfoRow.querySelector('input.text-input.label');
+		let valueInput = fromAccountInfoRow.querySelector('input.text-input.value');
+		invoiceJSON.fromSection.fromPersonalInfo.fromAccountInfo.push({label:labelInput.value, value:valueInput.value});
+	}
+	let fromInvoiceInfo = fromSection.querySelector('.from-invoice-info');
+
+	let fromInvoiceNumberInput = fromInvoiceInfo.querySelector('.from-invoice-number > .input-row > input.text-input');
+	invoiceJSON.fromSection.fromInvoiceInfo.fromInvoiceNumber = fromInvoiceNumberInput.value;
+
+	let fromInvoiceDateInput = fromInvoiceInfo.querySelector('.from-invoice-date > .input-row > input.date-input');
+	invoiceJSON.fromSection.fromInvoiceInfo.fromInvoiceDate = fromInvoiceDateInput.value;
+
+	let billToSection = document.querySelector('.invoice-container > .bill-to-section');
+	let billToCompanyInfo = billToSection.querySelector('.bill-to-company-info');
+
+	let billToCompanyName = billToCompanyInfo.querySelector('.bill-to-company-name > .input-row > input.text-input');
+	invoiceJSON.billToSection.billToCompanyInfo.billToCompanyName = billToCompanyName.value;
+
+	let billToAddressInfoInputList = billToCompanyInfo.querySelectorAll('.bill-to-address-info > .input-row > input.text-input');
+	for (let billToAddressInfo of billToAddressInfoInputList) {
+		invoiceJSON.billToSection.billToCompanyInfo.billToAddressInfo.push(billToAddressInfo.value);
+	}
+
+	let descriptionRowList = document.querySelectorAll('.invoice-container > .description-section > .description-row');
+	for (let descriptionRow of descriptionRowList) {
+		let descriptionTextarea = descriptionRow.querySelector('textarea.description');
+		let rateInput = descriptionRow.querySelector('input.text-input.rate');
+		let qtyInput = descriptionRow.querySelector('input.text-input.qty');
+		let amountInput = descriptionRow.querySelector('input.text-input.amount');
+
+		invoiceJSON.descriptionSection.push(    {
+        "description": descriptionTextarea.value,
+        "rate": rateInput.value,
+        "qty": qtyInput.value,
+        "amount": amountInput.value
+    });
+	}
+	return invoiceJSON;
+}
+
 function appendSaveAndPrint(parentElement) {
 	let inputRow = createElement('div', 'input-row');
 
 	let saveButton = createElement('button', 'save-button', null, 'Save', {type:'button'});
 	saveButton.addEventListener('click', (e) => {
+		let invoiceJSON = getInvoiceJSON();
+		postData("/save-invoice", invoiceJSON).then((data) => {
+			console.log(data);
+		});
 	});
 	inputRow.appendChild(saveButton);
 
@@ -126,14 +285,6 @@ function onLoad(event) {
 	let fromInvoiceInfo = createElement('div', 'from-invoice-info');
 	fromSection.appendChild(fromInvoiceInfo);
 
-	let invoiceCopier = createElement('div', 'invoice-copier');
-	fromInvoiceInfo.appendChild(invoiceCopier);
-	appendInvoiceCopier(invoiceCopier);
-
-	let fromInvoiceDate = createElement('div', 'from-invoice-date');
-	fromInvoiceInfo.appendChild(fromInvoiceDate);
-	appendInput(fromInvoiceInfo, 'date', false, {value:lastDayOfMonthString()});
-
 	invoiceContainer.appendChild(createElement('div', 'spacer'));
 
 	let billToSection = createElement('div', 'bill-to-section');
@@ -144,7 +295,19 @@ function onLoad(event) {
 
 	let billToCompanyName = createElement('div', 'bill-to-company-name');
 	billToCompanyInfo.appendChild(billToCompanyName);
-	appendInput(billToCompanyName, 'text');
+	let billToCompanyNameInput = appendInput(billToCompanyName, 'text');
+
+	let invoiceCopier = createElement('div', 'invoice-copier');
+	fromInvoiceInfo.appendChild(invoiceCopier);
+	appendInvoiceCopier(invoiceCopier, billToCompanyNameInput);
+
+	let fromInvoiceNumber = createElement('div', 'from-invoice-number');
+	fromInvoiceInfo.appendChild(fromInvoiceNumber);
+	appendInput(fromInvoiceNumber, 'text', false);
+
+	let fromInvoiceDate = createElement('div', 'from-invoice-date');
+	fromInvoiceInfo.appendChild(fromInvoiceDate);
+	appendInput(fromInvoiceDate, 'date', false, {value:lastDayOfMonthString()});
 
 	let billToAddressInfo = createElement('div', 'bill-to-address-info addable');
 	billToCompanyInfo.appendChild(billToAddressInfo);

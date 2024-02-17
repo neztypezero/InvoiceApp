@@ -75,6 +75,14 @@ html, body {
 	margin-bottom:1em;
 }
 
+.invoice-container > .from-section > .from-invoice-info > .from-invoice-number {
+	margin-bottom:1em;
+}
+
+.invoice-container > .from-section > .from-invoice-info > .from-invoice-number > .input-row > input.text-input {
+	max-width:115px;
+}
+
 .invoice-container > .from-section > .from-invoice-info .input-row {
 	justify-content:flex-end;
 }
