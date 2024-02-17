@@ -30,12 +30,12 @@ app.all(
 );
 
 app.get("/", (req, res) => { 
-	res.send("Express on Vercel"); 
+  res.type("html");
+  res.end(ruruHTML({ endpoint: "/graphql" }));
 }); 
 
 const PORT = process.env.PORT || 9874; app.listen(PORT, () => { 
-  res.type("html")
-  res.end(ruruHTML({ endpoint: "/graphql" }))
+	console.log(`Server is running on port ${PORT}`); 
 });
 
 
