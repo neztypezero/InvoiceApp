@@ -1,0 +1,117 @@
+html, body {
+	margin:0;
+	padding:0;
+	font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.invoice-container input,
+.invoice-container textarea {
+	font-family:inherit;
+}
+
+.invoice-container {
+	max-width:900px;
+	min-height:100vh;
+	margin:0 auto;
+	border-top:0.5em solid black;
+}
+
+.invoice-container .spacer {
+	margin:1em 2em;
+	height:0.16em;
+	background-color:darkgray;
+}
+
+.invoice-container .spacer.dark {
+	background-color:black;
+}
+
+.invoice-container .addable {
+	display:flex;
+	flex-direction:column;
+	gap:0.25em;
+}
+
+.invoice-container .input-row {
+	display:flex;
+	gap:0.25em;
+}
+
+.invoice-container .input-row > input.text-input {
+	flex:1 1 1px;
+}
+
+.invoice-container > .from-section {
+	display:flex;
+}
+
+.invoice-container > .from-section > .from-personal-info {
+	flex:1 1 50%;
+	padding:2em;
+}
+
+.invoice-container > .from-section > .from-personal-info > .from-name {
+	margin-bottom:1em;
+}
+
+.invoice-container > .bill-to-section > .bill-to-company-info > .bill-to-company-name > .input-row > input.text-input,
+.invoice-container > .from-section > .from-personal-info > .from-name > .input-row > input.text-input {
+	font-size:1.5em;
+	font-weight:bold;
+}
+
+.invoice-container > .from-section > .from-personal-info > .from-address-info {
+	margin-bottom:1em;
+}
+
+.invoice-container > .from-section > .from-invoice-info {
+	flex:1 1 50%;
+	padding:2em;
+}
+
+.invoice-container > .from-section > .from-invoice-info > .invoice-copier {
+	margin-bottom:1em;
+}
+
+.invoice-container > .from-section > .from-invoice-info .input-row {
+	justify-content:flex-end;
+}
+
+.invoice-container > .bill-to-section > .bill-to-company-info {
+	padding:2em;
+}
+
+.invoice-container > .bill-to-section > .bill-to-company-info > .bill-to-company-name {
+	margin-bottom:1em;
+}
+
+.invoice-container > .description-section {
+	padding:2em;
+	display:flex;
+	flex-direction:column;
+	gap:0.5em;
+}
+
+.invoice-container > .description-section > .description-row {
+	display:flex;
+	align-items:flex-start;
+	gap:0.5em;
+}
+
+.invoice-container > .description-section > .description-row > textarea.description {
+	flex:1 1 60%;
+	width:1px;
+}
+
+.invoice-container > .description-section > .description-row > input.rate,
+.invoice-container > .description-section > .description-row > input.amount {
+	flex:1 1 6%;
+	width:1px;
+}
+
+.invoice-container > .description-section > .description-row > input.qty {
+	flex:1 1 auto;
+	width:1px;
+}
