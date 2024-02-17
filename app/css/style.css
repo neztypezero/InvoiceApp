@@ -115,3 +115,11 @@ html, body {
 	flex:1 1 auto;
 	width:1px;
 }
+
+.invoice-container > .save-section {
+	padding:2em;
+}
+
+.invoice-container > .save-section > .input-row {
+	justify-content:flex-end;
+}

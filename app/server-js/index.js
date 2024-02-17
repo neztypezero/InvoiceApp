@@ -3,26 +3,6 @@ const express = require("express");
 const fs = require('fs');
 const path = require('path');
 
-const { createHandler } = require("graphql-http/lib/use/express");
-const { buildSchema } = require("graphql");
-
-// Construct a schema, using GraphQL schema language
-const schema = buildSchema(`
-  type Query {
-    rollDice(numDice: Int!, numSides: Int): [Int]
-  }
-`);
-
-const root = {
-  rollDice: args => {
-    var output = []
-    for (var i = 0; i < args.numDice; i++) {
-      output.push(1 + Math.floor(Math.random() * (args.numSides || 6)))
-    }
-    return output
-  },
-};
-
 const app = express();
 
 app.all(
@@ -35,19 +15,27 @@ app.all(
 
 app.get("/js/*", (req, res) => {
 	sendFile(req.path, res);
-}); 
+});
 
 app.get("/css/*", (req, res) => {
 	sendFile(req.path, res);
-}); 
+});
 
 app.get("/html/*", (req, res) => {
 	sendFile(req.path, res);
-}); 
+});
 
 app.get("/", (req, res) => { 
 	sendFile('/html/index.html', res);
-}); 
+});
+
+app.post("/save-invoice", (req, res) => { 
+	sendFile('/html/index.html', res);
+});
+
+app.post("/load-latest-invoice", (req, res) => { 
+	sendFile('/html/index.html', res);
+});
 
 const PORT = process.env.PORT || 9874; app.listen(PORT, () => { 
 	console.log(`Server is running on port ${PORT}`); 

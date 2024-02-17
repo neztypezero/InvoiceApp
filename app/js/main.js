@@ -79,6 +79,22 @@ function appendDecription(parentElement) {
 	parentElement.appendChild(inputRow);
 }
 
+function appendSaveAndPrint(parentElement) {
+	let inputRow = createElement('div', 'input-row');
+
+	let saveButton = createElement('button', 'save-button', null, 'Save', {type:'button'});
+	saveButton.addEventListener('click', (e) => {
+	});
+	inputRow.appendChild(saveButton);
+
+	let printPutton = createElement('button', 'print-button', null, 'Print', {type:'button'});
+	printPutton.addEventListener('click', (e) => {
+	});
+	inputRow.appendChild(printPutton);
+
+	parentElement.appendChild(inputRow);
+}
+
 function lastDayOfMonthString() {
 	let now  = new Date();
 	let date = new Date(now.getFullYear(), now.getMonth()+1, 0);
@@ -141,4 +157,8 @@ function onLoad(event) {
 	appendDecription(descriptionSection);
 
 	invoiceContainer.appendChild(createElement('div', 'spacer dark'));
+
+	let saveSection = createElement('div', 'save-section');
+	invoiceContainer.appendChild(saveSection);
+	appendSaveAndPrint(saveSection);
 }
